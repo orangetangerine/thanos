@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	_ "google.golang.org/grpc/balancer/grpclb" // To register gRPCLB.
 )
 
 type QType string
@@ -18,6 +19,8 @@ const (
 	SRV = QType("dnssrv")
 	// SRVNoA qtype performs SRV lookup without any A/AAAA lookup for each SRV result.
 	SRVNoA = QType("dnssrvnoa")
+	// gRPC Load Balance
+	GRPCLB = QType("grpclb")
 )
 
 type Resolver interface {
@@ -99,6 +102,8 @@ func (s *dnsSD) Resolve(ctx context.Context, name string, qtype QType) ([]string
 				res = append(res, appendScheme(scheme, net.JoinHostPort(resIP.String(), resPort)))
 			}
 		}
+	case GRPCLB:
+		res = append(res, "dns:///" + name)
 	default:
 		return nil, errors.Errorf("invalid lookup scheme %q", qtype)
 	}
